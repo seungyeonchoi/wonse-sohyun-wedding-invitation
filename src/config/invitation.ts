@@ -69,8 +69,6 @@ export const invitation = {
     heroBackground: "#6a1518",
     /** 히어로 시간/날짜 글자색 */
     heroText: "#e1e1e0",
-    /** 히어로 사진 카드 배경 */
-    heroCard: "#f6f0e1",
     /** 섹션 라벨(INVITATION 등) 타원 색상 */
     label: "#810a0e",
   },
@@ -116,7 +114,6 @@ export const invitation = {
 
   hero: {
     photo: "/photos/main.jpg",
-    topText: "we are getting married - ",
     playerTitle: "Now playing, Our story!",
   },
 

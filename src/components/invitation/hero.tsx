@@ -9,7 +9,7 @@ import { HeroPlayerControls } from "./hero-player";
 
 /**
  * "The First Track" cover: a phone lock screen with the ceremony time as the clock,
- * a photo card, and a now-playing widget. Laid out on the template's 400×711 artboard.
+ * the cover photo as a full-bleed card, and a now-playing widget. Laid out on the template's 400×711 artboard.
  */
 export function Hero() {
   const date = describeWeddingDate(invitation.date);
@@ -38,28 +38,15 @@ export function Hero() {
       </p>
 
       <div
+        className="overflow-hidden"
         style={{
           ...box(38, 172, 324, 324),
-          background: theme.heroCard,
           borderRadius: u(17),
           boxShadow: `${u(4)} ${u(4)} ${u(50)} rgb(0 0 0 / 0.2)`,
         }}
-      />
-      <div style={box(79.67, 213, 242.33, 241)} className="overflow-hidden">
-        <Image src={hero.photo} alt={`${groomName}와 ${brideName}`} fill priority sizes="(max-width: 430px) 62vw, 270px" className="object-cover" />
+      >
+        <Image src={hero.photo} alt={`${groomName}와 ${brideName}`} fill priority sizes="(max-width: 430px) 81vw, 348px" className="object-cover" />
       </div>
-      <p
-        className="font-brush flex items-center justify-center text-center leading-[1.5] font-normal break-words whitespace-pre-wrap text-[#121212]"
-        style={{ ...box(42.5, 174, 211, 44), fontSize: u(25) }}
-      >
-        {hero.topText}
-      </p>
-      <p
-        className="font-brush flex items-center justify-end text-right leading-[1.5] font-normal break-words whitespace-pre-wrap text-[#121212]"
-        style={{ ...box(68, 455, 280, 44), fontSize: u(25) }}
-      >
-        {date.onDateEn}
-      </p>
 
       <div
         style={{

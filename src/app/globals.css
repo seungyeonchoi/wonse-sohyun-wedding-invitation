@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* The invitation has a single light design. Without this, `dark:` follows the OS setting and the
+   shadcn button/input styles switch to their dark variants on phones in dark mode. */
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -38,8 +42,6 @@
   --font-gothic: "Pretendard", "Apple SD Gothic Neo", sans-serif;
   --font-inter: var(--font-inter), "Pretendard", sans-serif;
   --font-label: var(--font-playfair), serif;
-  /* 칼리폰트 샤우팅체 (src/fonts, loaded in layout.tsx) */
-  --font-brush: var(--font-brush), cursive;
   --font-signature: var(--font-signature), cursive;
   --font-pen: var(--font-pen), cursive;
 
@@ -119,6 +121,8 @@
   html {
     @apply font-sans;
     -webkit-text-size-adjust: 100%;
+    /* no double-tap zoom (pinch zoom is blocked by the viewport meta + ZoomLock) */
+    touch-action: manipulation;
   }
   body {
     @apply bg-paper-deep text-ink antialiased;

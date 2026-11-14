@@ -51,9 +51,10 @@ export function VenueMap({ lat, lng, name }: { lat: number; lng: number; name: s
       )}
 
       {!unlocked ? (
+        // Transparent tap catcher: the map stays fully visible, only a small hint pill sits on top.
         <button
           type="button"
-          className="absolute inset-0 z-10 grid place-items-center bg-white/50 p-3 font-gothic text-[14px] tracking-[-0.04em] text-[#616161] backdrop-blur-[3px] transition-all duration-200"
+          className="absolute inset-0 z-10 flex items-start justify-center p-3 font-gothic"
           onPointerUp={() => {
             const now = Date.now();
             if (now - lastTap.current < 350) setUnlocked(true);
@@ -64,7 +65,9 @@ export function VenueMap({ lat, lng, name }: { lat: number; lng: number; name: s
           }}
           aria-label="지도 조작하기"
         >
-          지도를 두 번 탭하면 이동할 수 있어요
+          <span className="rounded-full bg-black/55 px-3 py-1.5 text-[12px] tracking-[-0.02em] text-white backdrop-blur-sm">
+            지도를 두 번 탭하면 이동할 수 있어요
+          </span>
         </button>
       ) : null}
     </div>

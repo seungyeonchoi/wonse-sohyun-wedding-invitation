@@ -100,6 +100,13 @@ export function BgmProvider({ src, title, artist, artwork, autoplay = false, chi
     return stop;
   }, [src, autoplay]);
 
+  // The audio element is server-rendered, so its metadata can finish loading before hydration
+  // attaches onLoadedMetadata. Pick the duration up here so the player can show it before play.
+  useEffect(() => {
+    const el = audio.current;
+    if (el && Number.isFinite(el.duration)) setDuration(el.duration);
+  }, [src]);
+
   // Pause while the invitation is in the background (other tab, app switch, KakaoTalk in-app browser
   // minimised) and pick up again when the guest comes back.
   useEffect(() => {

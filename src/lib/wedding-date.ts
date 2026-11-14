@@ -67,8 +67,6 @@ export function describeWeddingDate(iso: string) {
     weekdayTimeKo: `${KO_WEEKDAYS[p.weekday]} ${ampm} ${hour12}시${minuteText}`,
     /** 2027년 7월 24일 토요일 오전 11시 30분 */
     fullKo: `${p.year}년 ${p.month}월 ${p.day}일 ${KO_WEEKDAYS[p.weekday]} ${ampm} ${hour12}시${minuteText}`,
-    /** on July 24, 2027 */
-    onDateEn: `on ${EN_MONTHS[p.month - 1]} ${p.day}, ${p.year}`,
   };
 }
 
