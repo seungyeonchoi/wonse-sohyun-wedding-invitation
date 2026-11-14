@@ -45,5 +45,5 @@ Vercel 같은 서버리스에선 인스턴스끼리 공유되지 않습니다. �
 
 ## 폰트
 
-표지 손글씨는 원본과 같은 **칼리폰트 샤우팅체**(callifont.com 무료 폰트, 웹 임베딩 허용·파일 수정/재배포 금지 → `src/fonts`에 원본 TTF 그대로. 저장소는 비공개로 유지하세요). 나머지 상용 폰트는 무료 폰트로 대체: Thesignature → Sacramento,
+원본의 상용 폰트는 무료 폰트로 대체: Thesignature → Sacramento,
 섹션 라벨 → Playfair Display, 손편지 → 나눔손글씨 펜. 본문은 원본과 같은 나눔명조, 표지는 Inter/Pretendard.
