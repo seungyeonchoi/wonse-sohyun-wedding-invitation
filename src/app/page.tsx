@@ -11,7 +11,6 @@ import { Hero } from "@/components/invitation/hero";
 import { Location } from "@/components/invitation/location";
 import { MiniAlbum } from "@/components/invitation/mini-album";
 import { Share } from "@/components/invitation/share";
-import { Snap } from "@/components/invitation/snap";
 import { invitation } from "@/config/invitation";
 import { brideName, groomName } from "@/lib/invitation";
 
@@ -34,7 +33,6 @@ export default function InvitationPage() {
         <Gallery title={gallery.title} photos={gallery.photos} initialCount={gallery.initialCount} />
         <Location />
         <Accounts />
-        <Snap />
         <Closing />
         {guestbook.enabled ? <Guestbook title={guestbook.title} previewCount={guestbook.previewCount} /> : null}
         <Share />

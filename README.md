@@ -12,18 +12,16 @@ pnpm dev
 ## 내용 바꾸기
 
 모든 텍스트·날짜·장소·계좌·이미지 경로는 **`src/config/invitation.ts`** 한 파일에 있습니다.
-아직 비어 있는 계좌(예금주/은행/계좌번호)는 템플릿 샘플 값이니 실제 정보로 바꿔주세요.
 
 | 항목 | 위치 |
 | --- | --- |
 | 사진 | `public/photos/` — 웨딩 촬영본을 슬롯별 비율로 잘라 웹용(EXIF 제거)으로 넣어둠. 사진을 **같은 파일명으로 덮어쓰면** 이미지 캐시 때문에 예전 사진이 보일 수 있어요. 새 파일명을 쓰거나 `rm -rf .next/dev/cache/images .next/cache/images` 후 강력 새로고침 |
 | 배경음악 | `public/audio/snowy.mp3` (스텔라장 - Snowy, 무음 제거·페이드·음량 정규화 후 128kbps). 곡을 바꾸면 config의 `bgm` 경로·제목·가수도 수정 |
 | 손편지 스캔 | `handLetter.image` (투명 PNG, 347:307). 비우면 `handLetter.text`를 손글씨 폰트로 표시 |
-| 하객 사진 이벤트 | `snap.uploadUrl` (구글 드라이브 업로드 폼 등) |
 
 ## 구조
 
-- `src/components/invitation/*` — 섹션별 컴포넌트 (표지 → 초대글 → 손편지 → 폴라로이드 → 달력 → 갤러리 → 오시는 길 → 계좌 → 스냅 이벤트 → 마무리 사진 → 방명록 → 공유)
+- `src/components/invitation/*` — 섹션별 컴포넌트 (표지 → 초대글 → 손편지 → 폴라로이드 → 달력 → 갤러리 → 오시는 길 → 계좌 → 마무리 사진 → 방명록 → 공유)
 - 표지·손편지·폴라로이드는 원본처럼 **400px 아트보드** 좌표로 배치하고 `--u = 100cqw / 400`으로 화면 폭에 맞춰 스케일합니다 (`src/lib/artboard.ts`).
 - `src/components/ui/*` — shadcn/ui (Accordion, Dialog, Drawer, Carousel, Sonner, Input…)
 

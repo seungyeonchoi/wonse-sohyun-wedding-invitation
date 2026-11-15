@@ -1,15 +1,13 @@
 /**
  * 청첩장에 들어가는 모든 콘텐츠는 이 파일 하나에서 관리합니다.
  * 이미지/음원은 public/ 아래에 넣고 경로만 바꿔주세요.
- *
- * TODO(사용자): 신부측 아버님·어머님 계좌 정보는 템플릿 샘플 값입니다. 실제 정보로 교체하세요.
  */
 
 import { describeWeddingDate } from "@/lib/wedding-date";
 
 /** 예식 일시 (KST). 표지 시계·달력·D-day·공유 문구가 모두 이 값에서 만들어집니다. */
 const WEDDING_DATE = "2027-02-27T15:00:00+09:00";
-const VENUE = "상록회관";
+const VENUE = "상록회관 상록아트홀";
 const HALL = "5층 아트홀";
 const ADDRESS = "서울 강남구 언주로 508";
 
@@ -120,12 +118,16 @@ export const invitation = {
   greeting: {
     title: "초대합니다",
     paragraphs: [
-      "평생을 함께하고 싶은 사람이 생겼습니다.",
-      "처음처럼 변치않는 마음으로 서로 아끼며",
-      "예쁘게 살겠습니다.",
-      "부디 함께하시어",
-      "저희의 하나됨을 따듯한 미소로",
-      "축복해주시기를 바랍니다.",
+      "평생을 함께하고 싶은 사람을 만났습니다",
+      "",
+      "사랑으로 시작된 저희의 인연을",
+      "서로에 대한 믿음으로 지켜가겠습니다",
+      "처음의 설렘을 잊지 않고",
+      "서로 아끼며 예쁘게 살겠습니다",
+      "",
+      "저희가 하나 되는 소중한 날",
+      "함께하시어 따뜻한 마음으로",
+      "축복해 주시기를 바랍니다",
     ],
   },
 
@@ -136,15 +138,13 @@ export const invitation = {
      */
     image: undefined as string | undefined,
     /** 문단은 빈 줄로 구분 */
-    text: `저희 두 사람의 새로운 시작을
-축하해 주셔서 진심으로 감사드립니다.
+    text: `저희 두 사람의 새로운 시작에
+따뜻한 마음을 보내주시는 모든 분께
+진심으로 감사드립니다
 
-귀한 걸음으로 함께해 주시는
-축복과 따뜻한 마음을 오래도록 기억하며,
-
-보내주신 응원에 보답할 수 있도록
-언제나 든든하고 책임감 있는 남편으로
-행복하게 잘 살아가겠습니다.`,
+그 소중한 마음을 오래도록 간직하며
+서로에게 든든한 사람이 되어
+행복하게 살아가겠습니다`,
   },
 
   miniAlbum: {
@@ -212,24 +212,8 @@ export const invitation = {
     ] satisfies Account[],
     bride: [
       { role: "신부", holder: "박소현", bank: "카카오뱅크", number: "3333-08-7057564" },
-      { role: "아버님", holder: "예금주", bank: "은행", number: "계좌번호" },
-      { role: "어머님", holder: "예금주", bank: "은행", number: "계좌번호" },
+      { role: "어머님", holder: "김기주", bank: "부산은행", number: "010-9700-3484" },
     ] satisfies Account[],
-  },
-
-  snap: {
-    enabled: true,
-    title: "베스트 포토그래퍼",
-    lead: "부부 선정, 오늘의 베스트 포토그래퍼!",
-    image: "/photos/snap.jpg",
-    paragraphs: [
-      "여러분이 포착해 주신 결정적 순간 중,",
-      "부부의 마음을 가장 설레게 한 컷을 찾아",
-      "소정의 선물을 보내드릴게요!",
-    ],
-    buttonText: "이벤트 참여하기",
-    /** 하객 사진 업로드 링크 (구글 드라이브 업로드 폼 등) */
-    uploadUrl: undefined as string | undefined,
   },
 
   closing: {
