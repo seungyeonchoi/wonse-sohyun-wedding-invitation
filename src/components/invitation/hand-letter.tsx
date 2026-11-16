@@ -10,20 +10,23 @@ import { PhotoStrip } from "./photo-strip";
 import { Reveal } from "./reveal";
 
 /** Handwriting pace: seconds per character, pause between lines and between paragraphs. */
-const PER_CHAR = 0.06;
-const LINE_PAUSE = 0.12;
-const PARAGRAPH_PAUSE = 0.35;
+const PER_CHAR = 0.035;
+const LINE_PAUSE = 0.06;
+const PARAGRAPH_PAUSE = 0.2;
+/** Shortest time for one line, and the wait before the first one. */
+const MIN_LINE = 0.25;
+const START = 0.2;
 
 /** Splits the letter into paragraphs of lines, each with when it starts being "written" and for how long. */
 function timeline(text: string) {
-  let at = 0.3;
+  let at = START;
   return text.split(/\n\s*\n/).map((para, p) => {
     if (p) at += PARAGRAPH_PAUSE;
     return para
       .trim()
       .split("\n")
       .map((line) => {
-        const duration = Math.max(0.35, line.length * PER_CHAR);
+        const duration = Math.max(MIN_LINE, line.length * PER_CHAR);
         const item = { line, delay: at, duration };
         at += duration + LINE_PAUSE;
         return item;

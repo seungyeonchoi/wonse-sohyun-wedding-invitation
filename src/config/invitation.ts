@@ -196,6 +196,9 @@ export const invitation = {
   miniAlbum: {
     groomPhoto: "/photos/polaroid-groom.jpg",
     bridePhoto: "/photos/polaroid-bride.jpg",
+    /** 어린 시절 사진: 폴라로이드에 먼저 나타났다가 서서히 사라지며 결혼사진이 드러납니다 (탭하면 다시 보기). */
+    groomChildPhoto: "/photos/polaroid-groom-child.jpg" as string | undefined,
+    brideChildPhoto: "/photos/polaroid-bride-child.jpg" as string | undefined,
   },
 
   calendar: {
