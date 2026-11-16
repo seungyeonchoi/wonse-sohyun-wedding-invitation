@@ -176,14 +176,6 @@
     animation: draw-oval 1.3s 0.3s cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
   }
 
-  /* Polaroids develop like instant film once they are well on screen (data-inview on the card). */
-  [data-inview="false"] .polaroid-film {
-    filter: brightness(1.9) saturate(0) contrast(0.55) sepia(0.25);
-  }
-  [data-inview="true"] .polaroid-film {
-    animation: develop 2.6s ease-out both;
-  }
-
   /* The hand letter is written out line by line (delays/durations come from --d/--t). */
   [data-inview] .letter-line {
     clip-path: inset(0 100% 0 0);
@@ -255,10 +247,6 @@
       animation: none;
       stroke-dashoffset: 0;
     }
-    [data-inview] .polaroid-film {
-      animation: none;
-      filter: none;
-    }
     [data-inview] .letter-line,
     [data-inview="true"] .letter-line {
       animation: none;
@@ -278,17 +266,6 @@
 @keyframes draw-oval {
   to {
     stroke-dashoffset: 0;
-  }
-}
-@keyframes develop {
-  0% {
-    filter: brightness(1.9) saturate(0) contrast(0.55) sepia(0.25);
-  }
-  55% {
-    filter: brightness(1.2) saturate(0.6) contrast(0.85) sepia(0.15);
-  }
-  100% {
-    filter: brightness(1) saturate(1) contrast(1) sepia(0);
   }
 }
 @keyframes write-line {
