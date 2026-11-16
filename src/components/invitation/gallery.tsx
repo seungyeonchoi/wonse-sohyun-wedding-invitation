@@ -173,7 +173,7 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
         className="mt-4 grid w-full grid-cols-2 gap-1"
         style={{ gridAutoRows: "calc((100cqw - 36px) / 2 * 46 / 177)" }}
       >
-        {visible.map(({ src, position }, i) => (
+        {visible.map(({ src, position, landscape }, i) => (
           <li key={src} className="relative overflow-hidden bg-[#f5f7f7]" style={{ gridRowEnd: `span ${SPANS[i % SPANS.length]}` }}>
             {picks.has(photoId(src)) ? (
               <span className="pointer-events-none absolute top-1.5 left-1.5 z-10 rounded-full bg-black/45 px-2 py-0.5 font-gothic text-[10px] tracking-normal text-white">
@@ -195,7 +195,9 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
                 src={src}
                 alt=""
                 fill
-                sizes="(max-width: 430px) 50vw, 210px"
+                // A landscape photo filling a tall cell is cropped to its middle, so it renders up to ~2.3x the cell width.
+                sizes={landscape ? "(max-width: 430px) 120vw, 510px" : "(max-width: 430px) 50vw, 210px"}
+                quality={90}
                 className="object-cover"
                 style={{ objectPosition: position ?? "50% 30%" }}
               />
@@ -241,7 +243,7 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
             <CarouselContent className="ml-0 h-dvh">
               {photos.map(({ src }) => (
                 <CarouselItem key={src} className="relative h-dvh pl-0">
-                  <Image src={src} alt="" fill sizes="100vw" draggable={false} className="object-contain select-none" />
+                  <Image src={src} alt="" fill sizes="100vw" quality={90} draggable={false} className="object-contain select-none" />
                 </CarouselItem>
               ))}
             </CarouselContent>

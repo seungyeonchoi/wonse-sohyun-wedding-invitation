@@ -23,6 +23,8 @@ const SHARE_IMAGE_SIZE = 800;
  * 원본에 촬영 시각(EXIF)이 남아 있지 않아 작가 원본 번호를 기준으로 했습니다:
  * 세부-1~20 (스튜디오 → 베이지 수트 → 야외 → 잔디밭) → 색감-1~4 (잔디밭, 18시쯤) → 세부-21~26 (노을 다리).
  * 파일 번호가 곧 좋아요 ID이니, 순서를 바꿀 땐 파일 이름은 그대로 두고 이 목록만 바꾸세요.
+ * 파일은 작가 보정본을 긴 변 3600px · JPEG 품질 92(4:4:4)로 줄인 것입니다. 기기별 크기는 next/image가 만들어 주니
+ * 사진을 바꿀 때도 미리 작게 줄이지 말고 이 정도 해상도로 넣어 주세요.
  */
 const GALLERY_ORDER = [
   // 세부-1~10: 스튜디오, 블랙 수트
@@ -45,6 +47,9 @@ const GALLERY_POSITIONS: Record<string, string> = {
   "17": "50% 6%", // 얼굴이 맨 위
   "25": "50% 92%", // 하늘이 대부분이고 두 사람은 맨 아래
 };
+
+/** 가로 사진. 세로로 긴 칸에 꽉 채우면 크게 확대되니 썸네일을 더 큰 해상도로 받습니다. */
+const GALLERY_LANDSCAPE = new Set(["04"]);
 
 export type Person = {
   /** 성 */
@@ -74,6 +79,8 @@ export type GalleryPhoto = {
   src: string;
   /** 썸네일에서 보일 위치 (CSS object-position) */
   position?: string;
+  /** 가로 사진이면 true (썸네일을 더 큰 해상도로 받음) */
+  landscape?: boolean;
 };
 
 export type TransportItem = {
@@ -225,6 +232,7 @@ export const invitation = {
       (file): GalleryPhoto => ({
         src: `/photos/gallery/${file}.jpg`,
         ...(GALLERY_POSITIONS[file] ? { position: GALLERY_POSITIONS[file] } : {}),
+        ...(GALLERY_LANDSCAPE.has(file) ? { landscape: true } : {}),
       }),
     ),
   },

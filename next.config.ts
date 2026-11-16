@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
+  images: {
+    // 75 is next/image's default; the gallery asks for 90 so the photos stay close to the originals.
+    qualities: [75, 90],
+  },
   turbopack: {
     rules: {
       "*.css": {
