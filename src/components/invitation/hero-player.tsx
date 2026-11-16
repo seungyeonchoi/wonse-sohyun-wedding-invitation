@@ -1,11 +1,17 @@
 "use client";
 
 import { useRef, type PointerEvent } from "react";
+import { toast } from "sonner";
 
+import { invitation } from "@/config/invitation";
 import { box, u } from "@/lib/artboard";
+import { pageEffect, useSignal } from "@/lib/signal";
+import { useWeddingPhase } from "@/lib/use-now";
 import { cn } from "@/lib/utils";
+import { describeWeddingDate } from "@/lib/wedding-date";
 
 import { useBgm } from "./bgm";
+import { Particles } from "./particles";
 
 const INK = "#434343";
 const SOFT = "#817c77";
@@ -34,6 +40,21 @@ function DoubleTriangle({ flip }: { flip?: boolean }) {
   );
 }
 
+/** Taps on the waveform (each within TAP_WINDOW of the last) that start or stop the page-wide snow. */
+const SNOW_TAPS = 5;
+const TAP_WINDOW = 700;
+
+/** Player title: "Now playing, Our story!" until the wedding, then the next track. */
+export function HeroPlayerTitle() {
+  const phase = useWeddingPhase();
+  return <>{phase?.kind === "married" ? invitation.hero.playerTitleAfter : invitation.hero.playerTitle}</>;
+}
+
+function airplayToast() {
+  const d = describeWeddingDate(invitation.date);
+  toast(`🔊 ${d.monthDayKo} ${d.weekdayTimeKo}, ${invitation.location.venue} 스피커에 연결될 예정이에요.`);
+}
+
 function formatTime(sec: number) {
   if (!Number.isFinite(sec)) return "0:00";
   const s = Math.floor(sec);
@@ -47,6 +68,20 @@ function formatTime(sec: number) {
 export function HeroPlayerControls() {
   const { available, playing, loading, currentTime, duration, toggle, seekBy, seekTo } = useBgm();
   const bar = useRef<HTMLDivElement>(null);
+  const effect = useSignal(pageEffect);
+  const taps = useRef({ count: 0, last: 0 });
+
+  const onWaveTap = () => {
+    const now = Date.now();
+    const t = taps.current;
+    t.count = now - t.last < TAP_WINDOW ? t.count + 1 : 1;
+    t.last = now;
+    if (t.count < SNOW_TAPS) return;
+    t.count = 0;
+    const snowing = effect === "snow";
+    pageEffect.set(snowing ? null : "snow");
+    toast(snowing ? "눈이 그쳤어요." : "❄️ Snowy — 눈이 내려요.");
+  };
 
   const ratio = available ? (duration ? currentTime / duration : 0) : IDLE_PROGRESS;
   // Once music has started the bars keep their animation and simply freeze while paused.
@@ -60,8 +95,16 @@ export function HeroPlayerControls() {
 
   return (
     <>
-      {/* waveform glyph — bounces while music is playing */}
-      <div aria-hidden className="flex items-center justify-between" style={{ ...box(333, 549, 24, 25), padding: `0 ${u(1)}` }}>
+      {/* "Snowy": snow falls on the cover while the song plays (the page-wide snow takes over when it is on) */}
+      <Particles active={playing && effect !== "snow"} className="pointer-events-none absolute inset-0 size-full" />
+
+      {/* waveform glyph — bounces while music is playing; tap it five times for snow everywhere */}
+      <div
+        aria-hidden
+        className="flex items-center justify-between before:absolute before:-inset-2"
+        style={{ ...box(333, 549, 24, 25), padding: `0 ${u(1)}` }}
+        onClick={onWaveTap}
+      >
         {BARS.map((h, i) => {
           const [animation, seconds] = BAR_MOTION[i];
           return (
@@ -164,11 +207,20 @@ export function HeroPlayerControls() {
       </button>
 
       {/* AirPlay (audio) glyph: concentric arcs over a triangle */}
-      <svg aria-hidden viewBox="0 0 24 24" fill="none" style={{ ...box(334, 626, 24, 24), color: SOFT }}>
-        <path d="M5.2 17.4a9.2 9.2 0 1 1 13.6 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M8.3 14.6a5 5 0 1 1 7.4 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M11.2 14.3a1 1 0 0 1 1.6 0l4 5.4a1 1 0 0 1-.8 1.6H8a1 1 0 0 1-.8-1.6Z" fill="currentColor" />
-      </svg>
+      <button
+        type="button"
+        data-bgm-control
+        aria-label="스피커 연결"
+        onClick={airplayToast}
+        style={{ ...box(334, 626, 24, 24), color: SOFT }}
+        className="transition-transform active:scale-90"
+      >
+        <svg aria-hidden viewBox="0 0 24 24" fill="none" className="size-full">
+          <path d="M5.2 17.4a9.2 9.2 0 1 1 13.6 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M8.3 14.6a5 5 0 1 1 7.4 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M11.2 14.3a1 1 0 0 1 1.6 0l4 5.4a1 1 0 0 1-.8 1.6H8a1 1 0 0 1-.8-1.6Z" fill="currentColor" />
+        </svg>
+      </button>
     </>
   );
 }

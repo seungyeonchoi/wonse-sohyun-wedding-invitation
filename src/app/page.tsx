@@ -10,17 +10,22 @@ import { HandLetter } from "@/components/invitation/hand-letter";
 import { Hero } from "@/components/invitation/hero";
 import { Location } from "@/components/invitation/location";
 import { MiniAlbum } from "@/components/invitation/mini-album";
+import { PageEffects } from "@/components/invitation/page-effects";
 import { Share } from "@/components/invitation/share";
 import { invitation } from "@/config/invitation";
 import { brideName, groomName } from "@/lib/invitation";
+import { describeWeddingDate } from "@/lib/wedding-date";
 
 export default function InvitationPage() {
   const { gallery, guestbook } = invitation;
+  const date = describeWeddingDate(invitation.date);
+  const pad = (n: number) => String(n).padStart(2, "0");
   return (
     <BgmProvider
       src={invitation.bgm?.src}
       title={invitation.bgm?.title ?? invitation.hero.playerTitle}
       artist={invitation.bgm?.artist ?? `${groomName} ♥ ${brideName}`}
+      album={`${groomName} ♥ ${brideName} · ${date.year}.${pad(date.month)}.${pad(date.day)}`}
       artwork={invitation.hero.photo}
       autoplay={invitation.bgm?.autoplay}
     >
@@ -34,10 +39,17 @@ export default function InvitationPage() {
         <Location />
         <Accounts />
         <Closing />
-        {guestbook.enabled ? <Guestbook title={guestbook.title} previewCount={guestbook.previewCount} /> : null}
+        {guestbook.enabled ? (
+          <Guestbook
+            title={guestbook.title}
+            previewCount={guestbook.previewCount}
+            capsuleOpensAt={guestbook.timeCapsule.enabled ? guestbook.timeCapsule.opensAt : undefined}
+          />
+        ) : null}
         <Share />
         <Footer />
       </main>
+      <PageEffects />
     </BgmProvider>
   );
 }

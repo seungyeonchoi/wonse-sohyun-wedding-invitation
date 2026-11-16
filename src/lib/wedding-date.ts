@@ -89,3 +89,31 @@ export function daysUntil(iso: string, now = new Date()): number {
   const target = Date.UTC(b.year, b.month - 1, b.day);
   return Math.round((target - today) / 86_400_000);
 }
+
+export type WeddingPhase =
+  /** days: whole days left (≥ 1) */
+  | { kind: "upcoming"; days: number }
+  /** Wedding day, before the ceremony starts. */
+  | { kind: "today"; minutesLeft: number }
+  | { kind: "ceremony" }
+  /** day 1 = the wedding day itself, after the ceremony. */
+  | { kind: "married"; day: number };
+
+/** Where `now` sits relative to the ceremony, so copy can change on the day and after it. */
+export function weddingPhase(iso: string, ceremonyMinutes: number, now: Date): WeddingPhase {
+  const start = new Date(iso).getTime();
+  const t = now.getTime();
+  if (t < start) {
+    const days = daysUntil(iso, now);
+    return days > 0 ? { kind: "upcoming", days } : { kind: "today", minutesLeft: Math.max(1, Math.ceil((start - t) / 60_000)) };
+  }
+  if (t < start + ceremonyMinutes * 60_000) return { kind: "ceremony" };
+  return { kind: "married", day: 1 - daysUntil(iso, now) };
+}
+
+/** 133 → "2시간 13분" */
+export function formatDuration(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return [h ? `${h}시간` : "", m || !h ? `${m}분` : ""].filter(Boolean).join(" ");
+}

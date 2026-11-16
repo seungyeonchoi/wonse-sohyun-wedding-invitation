@@ -29,17 +29,58 @@ pnpm dev
 
 Kakao Developers 앱 **원세 소현 청첩장 (ID 1648287)** 의 JavaScript 키를 `.env.local`의 `NEXT_PUBLIC_KAKAO_JS_KEY`에 넣어 둠.
 
-- 카카오맵: 활성화됨 (이 앱이 계정의 일간 무료 쿼터 대상)
-- 등록된 도메인: `http://localhost:3000` — **배포 도메인이 정해지면 두 곳에 추가**해야 지도와 카톡 공유가 동작합니다.
-  1. 앱 → 플랫폼 키 → JavaScript 키 → JavaScript SDK 도메인
-  2. 앱 → 제품 링크 관리 → 웹 도메인 (카톡 공유 메시지 링크용)
-- 배포 환경 변수에도 `NEXT_PUBLIC_KAKAO_JS_KEY`, `NEXT_PUBLIC_SITE_URL`(배포 주소)을 넣어주세요.
+- 카카오맵: 활성화됨 (이 앱이 계정의 일간 무료 쿼터 대상). 배포 주소(`https://wonse-sohyun-wedding-invitation.vercel.app`)에서도 지도가 뜨는 것 확인.
+- 도메인은 **두 곳 모두**에 배포 주소가 있어야 합니다.
+  1. 앱 → 플랫폼 키 → JavaScript 키 → JavaScript SDK 도메인 (지도·공유 SDK)
+  2. 앱 → 제품 링크 관리 → 웹 도메인 (카톡 공유 메시지의 링크·버튼)
+- 배포 주소는 `NEXT_PUBLIC_SITE_URL`이 없으면 Vercel 프로덕션 도메인을 자동으로 씁니다. 커스텀 도메인을 붙이면 이 값과 위 두 곳을 같이 바꿔주세요.
 
-## 방명록 저장소 ⚠️
+**카카오톡 공유 카드** (`src/components/invitation/share.tsx`, 설정은 `invitation.share`)
 
-`src/lib/guestbook-store.ts`는 **서버 메모리**에 저장합니다. 개발용으로는 충분하지만 서버 재시작 시 사라지고,
-Vercel 같은 서버리스에선 인스턴스끼리 공유되지 않습니다. 배포 전 이 파일의 세 함수
-(`listEntries`/`addEntry`/`deleteEntry`)를 Supabase·Postgres·Redis 등으로 교체하세요. API와 UI는 그대로 둬도 됩니다.
+- 위치 템플릿: 정사각 사진(`public/photos/share.jpg`, 갤러리 06번) + "청첩장 보기" 버튼 + 카카오가 붙이는 "위치 보기"(카톡 안에서 지도). 방명록 수(💬)·하트 수(♥)가 0보다 크면 함께 표시.
+- 링크를 그냥 붙여넣을 때의 미리보기는 OG 이미지(`public/photos/og-couple.jpg`, 2:1 1200×600 — 카카오 허용 비율 1:1·2:1·4:3).
+- 카카오는 이미지와 미리보기를 캐시합니다. 사진을 바꾸면 파일 이름을 바꾸고, [공유 디버거](https://developers.kakao.com/tool/debugger/sharing)에서 배포 주소의 캐시를 지워주세요.
+
+## 저장소 (Supabase)
+
+방명록·갤러리 좋아요·푸터 하트·타임캡슐은 Supabase **numugas 프로젝트의 `wedding` 스키마**에 저장합니다 (다른 앱과 같은 프로젝트라 스키마로 분리).
+스키마는 `supabase/migrations/20261115000000_wedding_invitation.sql` 하나에 있습니다.
+
+- 테이블은 Data API에 노출하지 않고, 서버(`src/lib/supabase.ts`)가 `public.wedding_*` 함수만 호출합니다.
+- 방명록 비밀번호와 타임캡슐 열쇠는 DB 안에서 bcrypt로 검사합니다. 같은 프로젝트의 공개 anon 키를 가진 사람도 비밀번호 해시를 읽거나 남의 글을 지우거나 타임캡슐을 열 수 없습니다.
+- 환경 변수: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (서버 전용). 로컬은 `.env.local`, 배포는 Vercel 프로젝트 환경 변수.
+- 무료 프로젝트는 7일간 요청이 없으면 일시정지되므로 `vercel.json`의 크론이 매일 `/api/keepalive`를 호출합니다.
+
+타임캡슐 열쇠 정하기 (Supabase SQL Editor에서 한 번):
+
+```sql
+update wedding.capsule_settings set key_hash = extensions.crypt('두 사람만 아는 열쇠', extensions.gen_salt('bf'));
+```
+
+## 이스터에그
+
+| 어디서 | 무엇을 하면 | 일어나는 일 |
+| --- | --- | --- |
+| 표지 | 페이지를 열면 | 잠금화면 알림처럼 예식 일정 → 최근 방명록 3개가 내려옴 (탭하면 해당 섹션으로 이동) |
+| 표지 시계 | 탭 | 4초간 지금 시각으로 바뀜 |
+| 표지 | 음악 재생 중 | 눈이 내림 (Snowy) |
+| 표지 음파 막대 | 5번 연속 탭 | 페이지 전체에 눈 (다시 5번 → 그침) |
+| 표지 AirPlay 아이콘 | 탭 | "식장 스피커에 연결될 예정" 토스트 |
+| 휴대폰 잠금화면 | 음악 켠 채 잠금 | 곡 정보 아래 `원세 ♥ 소현 · 2027.02.27` |
+| 섹션 라벨 | 스크롤 | 타원이 펜으로 그려짐 |
+| 네컷 필름 | 탭 | 한 장씩 플래시 터지며 다시 찍힘 |
+| 손편지 | 스크롤 | 한 줄씩 써짐 |
+| 폴라로이드 | 스크롤 | 즉석사진처럼 현상됨 |
+| 달력 27일 | 탭 | 하트 + "내 캘린더에 저장(.ics) / 구글 캘린더" 버튼 |
+| D-day 문구 | 시간이 지나면 | 당일엔 "예식까지 N시간 M분", 예식 중엔 "진행 중", 이후엔 "부부가 된 지 N일째" (플레이어 제목도 `Track 2. Married life`) |
+| 지도 | — | 두 사람 사진 마커 |
+| 갤러리 뷰어 | 더블탭 / 하트 버튼 | 좋아요, 가장 많이 받은 3장에 "하객 Pick" 배지 |
+| 방명록 아래 | 편지 넣기 | 1주년 타임캡슐. 여는 날짜·열쇠는 DB(`wedding.capsule_settings`)가 검사 |
+| 푸터 하트 | 탭 / 10번 | 모든 하객 누적 카운트 / 숨은 메시지 |
+| 개발자도구 콘솔 | 열기 | ASCII 하트와 인사말 |
+| 키보드 | ↑↑↓↓←→←→BA | 하트가 쏟아짐 |
+| 터미널 | `curl <사이트 주소>` | 텍스트 청첩장 (`/invitation.txt`, `?plain`이면 색 없음) |
+| 응답 헤더 | 네트워크 탭 | `X-Wedding: Wonse <3 Sohyun; …` |
 
 ## 폰트
 

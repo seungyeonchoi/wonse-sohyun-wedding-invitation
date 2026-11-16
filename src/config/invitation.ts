@@ -11,6 +11,34 @@ const VENUE = "상록회관 상록아트홀";
 const HALL = "5층 아트홀";
 const ADDRESS = "서울 강남구 언주로 508";
 
+/**
+ * 갤러리에 보여줄 순서 (public/photos/gallery/NN.jpg의 NN). 촬영 순서대로입니다.
+ * 원본에 촬영 시각(EXIF)이 남아 있지 않아 작가 원본 번호를 기준으로 했습니다:
+ * 세부-1~20 (스튜디오 → 베이지 수트 → 야외 → 잔디밭) → 색감-1~4 (잔디밭, 18시쯤) → 세부-21~26 (노을 다리).
+ * 파일 번호가 곧 좋아요 ID이니, 순서를 바꿀 땐 파일 이름은 그대로 두고 이 목록만 바꾸세요.
+ */
+const GALLERY_ORDER = [
+  // 세부-1~10: 스튜디오, 블랙 수트
+  "01", "27", "07", "11", "14", "22", "23", "05", "21", "24",
+  // 세부-11~16: 베이지 수트
+  "20", "10", "12", "02", "16", "06",
+  // 세부-17~20: 야외 마당 → 잔디밭
+  "29", "30", "13", "08",
+  // 색감-1~4: 잔디밭
+  "03", "19", "09", "25",
+  // 세부-21~26: 노을 다리
+  "15", "18", "26", "28", "04", "17",
+];
+
+/** 작은 칸에서 얼굴·인물이 잘리는 사진의 보이는 위치 (CSS object-position, 기본 "50% 30%") */
+const GALLERY_POSITIONS: Record<string, string> = {
+  "06": "50% 60%", // 바닥에 엎드린 사진이라 얼굴이 아래쪽
+  "02": "50% 18%",
+  "10": "50% 12%",
+  "17": "50% 6%", // 얼굴이 맨 위
+  "25": "50% 92%", // 하늘이 대부분이고 두 사람은 맨 아래
+};
+
 export type Person = {
   /** 성 */
   lastName: string;
@@ -59,7 +87,21 @@ export const invitation = {
       (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
         ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
         : "http://localhost:3000"),
-    ogImage: "/photos/og.jpg",
+    /** 링크 미리보기 이미지. 카카오 허용 비율(1:1·2:1·4:3)에 맞춘 2:1. 바꿀 땐 파일 이름도 바꿔야 캐시에 안 걸려요. */
+    ogImage: "/photos/og-couple.jpg",
+    ogImageSize: { width: 1200, height: 600 },
+  },
+
+  /**
+   * 카카오톡 공유 카드 (위치 템플릿: 정사각 사진 + "위치 보기" 지도 버튼 + 방명록·하트 수).
+   * 링크를 그냥 붙여넣을 때 나오는 미리보기는 위 meta(og)를 씁니다.
+   */
+  share: {
+    /** 800×800 정사각 사진 (갤러리 06번에서 잘라냄). 카카오가 이미지를 캐시하니 바꿀 땐 파일 이름도 바꿔주세요. */
+    image: "/photos/share.jpg",
+    imageSize: 800,
+    /** 왼쪽 버튼. 오른쪽엔 카카오가 "위치 보기" 버튼을 자동으로 붙입니다. */
+    buttonTitle: "청첩장 보기",
   },
 
   theme: {
@@ -96,6 +138,8 @@ export const invitation = {
   },
 
   date: WEDDING_DATE,
+  /** 예식이 진행되는 시간(분). 이 시간 동안 D-day 문구가 "진행 중"으로 바뀝니다. */
+  ceremonyMinutes: 120,
 
   /**
    * 배경음악. 표지 플레이어의 재생/정지·탐색 버튼이 이 파일을 재생하고,
@@ -113,6 +157,8 @@ export const invitation = {
   hero: {
     photo: "/photos/main.jpg",
     playerTitle: "Now playing, Our story!",
+    /** 예식이 끝난 뒤 플레이어 제목 */
+    playerTitleAfter: "Track 2. Married life",
   },
 
   greeting: {
@@ -165,11 +211,12 @@ export const invitation = {
      * 순서대로 큰 칸·작은 칸·중간 칸·작은 칸이 반복됩니다. 작은 칸(2·4·6…번째)은 가로로 잘리니
      * 얼굴 위치가 다르면 position(CSS object-position)으로 보이는 부분을 조정하세요. 기본값 "50% 30%".
      */
-    photos: Array.from({ length: 30 }, (_, i): GalleryPhoto => ({
-      src: `/photos/gallery/${String(i + 1).padStart(2, "0")}.jpg`,
-      // 06: 바닥에 엎드린 사진이라 얼굴이 화면 아래쪽에 있음
-      ...(i + 1 === 6 ? { position: "50% 60%" } : {}),
-    })),
+    photos: GALLERY_ORDER.map(
+      (file): GalleryPhoto => ({
+        src: `/photos/gallery/${file}.jpg`,
+        ...(GALLERY_POSITIONS[file] ? { position: GALLERY_POSITIONS[file] } : {}),
+      }),
+    ),
   },
 
   location: {
@@ -226,10 +273,20 @@ export const invitation = {
     title: "방명록",
     /** 메인 화면에 미리 보여줄 개수 */
     previewCount: 3,
+    /**
+     * 1주년에 두 사람만 열어볼 수 있는 편지함. 실제로 열리는 시각과 열쇠는 DB가 검사합니다
+     * (wedding.capsule_settings). opensAt을 바꾸면 그 테이블의 opens_at도 같이 바꿔주세요.
+     */
+    timeCapsule: {
+      enabled: true,
+      opensAt: "2028-02-27T00:00:00+09:00",
+    },
   },
 
   footer: {
     copyright: "Copyright © Wonse & Sohyun. All rights reserved.",
+    /** 하트를 10번 누르면 나오는 숨은 메시지 */
+    secret: "열 번이나 눌러주셨네요! 이 청첩장은 신랑이 한 줄 한 줄 직접 만들었어요 💻",
   },
 };
 

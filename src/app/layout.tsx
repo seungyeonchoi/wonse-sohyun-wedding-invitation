@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     type: "website",
     title: invitation.meta.title,
     description: invitation.meta.description,
-    images: [{ url: invitation.meta.ogImage, width: 1200, height: 630 }],
+    images: [{ url: invitation.meta.ogImage, ...invitation.meta.ogImageSize }],
   },
   robots: { index: false, follow: false },
 };

@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { KAKAO_JS_KEY, loadKakaoMaps } from "@/lib/kakao";
 import { cn } from "@/lib/utils";
 
+const PIN_PHOTO = "/photos/map-pin.jpg";
+
 /**
  * Map locked behind a frosted overlay until the guest double-taps it, so scrolling
  * the invitation never gets hijacked by the map. Uses Kakao Maps when a key is set,
@@ -25,7 +27,17 @@ export function VenueMap({ lat, lng, name }: { lat: number; lng: number; name: s
         if (!maps || cancelled || !el.current) return;
         const center = new maps.LatLng(lat, lng);
         map.current = new maps.Map(el.current, { center, level: 3, draggable: false, scrollwheel: false });
-        new maps.Marker({ position: center, title: name }).setMap(map.current);
+        // A round photo of the two of us as the pin, instead of Kakao's default marker.
+        const pin = document.createElement("div");
+        pin.className = "venue-pin";
+        pin.title = name;
+        const photo = document.createElement("img");
+        photo.src = PIN_PHOTO;
+        photo.alt = "";
+        const heart = document.createElement("span");
+        heart.textContent = "♥";
+        pin.append(photo, heart);
+        new maps.CustomOverlay({ position: center, content: pin, yAnchor: 1, zIndex: 3 }).setMap(map.current);
       })
       .catch(() => {});
     return () => {

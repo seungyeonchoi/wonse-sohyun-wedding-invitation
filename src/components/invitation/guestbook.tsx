@@ -14,14 +14,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchGuestbook } from "@/lib/guestbook-client";
 import type { GuestbookEntry } from "@/lib/guestbook-store";
 
 import { Reveal } from "./reveal";
 import { SectionHeading } from "./section-heading";
+import { dismissKeyboard, drawerClass, fieldClass, focusOnEnter, passwordProps, SheetForm, textareaClass } from "./sheet-form";
 import { TemplateButton } from "./template-button";
-
-const drawerClass = "mx-auto w-full max-w-[430px] bg-paper font-myeongjo tracking-[-0.04em] text-ink";
-const fieldClass = "h-11 rounded-[12px] border-line-strong bg-white/60 text-[15px] shadow-none";
+import { TimeCapsule } from "./time-capsule";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -47,17 +47,18 @@ function EntryCard({ entry, onDelete }: { entry: GuestbookEntry; onDelete?: (ent
   );
 }
 
-export function Guestbook({ title, previewCount }: { title: string; previewCount: number }) {
+export function Guestbook({ title, previewCount, capsuleOpensAt }: { title: string; previewCount: number; capsuleOpensAt?: string }) {
   const [entries, setEntries] = useState<GuestbookEntry[] | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const [writeOpen, setWriteOpen] = useState(false);
   const [deleting, setDeleting] = useState<GuestbookEntry | null>(null);
   const [pending, setPending] = useState(false);
+  /** What the guest has typed so far, kept if the sheet is closed by accident (the password is not kept). */
+  const [draft, setDraft] = useState({ name: "", message: "" });
 
   useEffect(() => {
-    fetch("/api/guestbook")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data: { entries: GuestbookEntry[] }) => setEntries(data.entries))
+    fetchGuestbook()
+      .then(setEntries)
       .catch(() => setEntries([]));
   }, []);
 
@@ -74,6 +75,8 @@ export function Guestbook({ title, previewCount }: { title: string; previewCount
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "등록하지 못했어요.");
       setEntries((prev) => [data.entry, ...(prev ?? [])]);
+      setDraft({ name: "", message: "" });
+      dismissKeyboard();
       setWriteOpen(false);
       toast("방명록이 등록되었습니다.");
     } catch (err) {
@@ -96,6 +99,7 @@ export function Guestbook({ title, previewCount }: { title: string; previewCount
       });
       if (!res.ok && res.status !== 404) throw new Error((await res.json()).error ?? "삭제하지 못했어요.");
       setEntries((prev) => prev?.filter((x) => x.id !== deleting.id) ?? []);
+      dismissKeyboard();
       setDeleting(null);
       toast("삭제되었습니다.");
     } catch (err) {
@@ -108,7 +112,7 @@ export function Guestbook({ title, previewCount }: { title: string; previewCount
   const preview = entries?.slice(0, previewCount) ?? [];
 
   return (
-    <Reveal aria-label={title} className="flex flex-col items-center px-4 py-12">
+    <Reveal id="guestbook" aria-label={title} className="flex scroll-mt-4 flex-col items-center px-4 py-12">
       <SectionHeading label="BOARDS" title={title} />
 
       {preview.length ? (
@@ -132,13 +136,15 @@ export function Guestbook({ title, previewCount }: { title: string; previewCount
         </TemplateButton>
       </div>
 
+      {capsuleOpensAt ? <TimeCapsule opensAt={capsuleOpensAt} /> : null}
+
       <Drawer open={listOpen} onOpenChange={setListOpen}>
         <DrawerContent className={drawerClass}>
           <DrawerHeader>
             <DrawerTitle className="font-myeongjo text-[17px] font-normal text-ink">{title}</DrawerTitle>
             <DrawerDescription className="text-ink-muted">총 {entries?.length ?? 0}개의 축하 메시지</DrawerDescription>
           </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-8">
+          <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pb-8">
             {entries?.length ? (
               <ul className="flex flex-col gap-2">
                 {entries.map((entry) => (
@@ -158,25 +164,61 @@ export function Guestbook({ title, previewCount }: { title: string; previewCount
             <DrawerTitle className="font-myeongjo text-[17px] font-normal text-ink">방명록 작성</DrawerTitle>
             <DrawerDescription className="text-ink-muted">두 사람에게 축하의 마음을 남겨주세요.</DrawerDescription>
           </DrawerHeader>
-          <form onSubmit={submit} className="flex flex-col gap-4 px-4 pb-8">
+          <SheetForm
+            onSubmit={submit}
+            submit={
+              <TemplateButton tone="dark" type="submit" disabled={pending}>
+                {pending ? "등록 중…" : "등록하기"}
+              </TemplateButton>
+            }
+          >
             <div className="flex gap-2">
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="gb-name">이름</Label>
-                <Input id="gb-name" name="name" required maxLength={20} autoComplete="name" className={fieldClass} />
+                <Input
+                  id="gb-name"
+                  name="name"
+                  required
+                  maxLength={20}
+                  autoComplete="name"
+                  enterKeyHint="next"
+                  defaultValue={draft.name}
+                  onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                  onKeyDown={focusOnEnter("password")}
+                  className={fieldClass}
+                />
               </div>
               <div className="flex flex-1 flex-col gap-1.5">
                 <Label htmlFor="gb-password">비밀번호</Label>
-                <Input id="gb-password" name="password" type="password" required minLength={4} maxLength={20} autoComplete="new-password" className={fieldClass} />
+                <Input
+                  id="gb-password"
+                  name="password"
+                  {...passwordProps}
+                  required
+                  minLength={4}
+                  maxLength={20}
+                  placeholder="삭제할 때 필요"
+                  enterKeyHint="next"
+                  onKeyDown={focusOnEnter("message")}
+                  className={`${fieldClass} placeholder:text-[13px]`}
+                />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="gb-message">내용</Label>
-              <Textarea id="gb-message" name="message" required maxLength={500} rows={5} className="min-h-32 rounded-[12px] border-line-strong bg-white/60 text-[15px] shadow-none" />
+              <Textarea
+                id="gb-message"
+                name="message"
+                required
+                maxLength={500}
+                rows={5}
+                placeholder="두 사람에게 전할 축하 메시지"
+                defaultValue={draft.message}
+                onChange={(e) => setDraft((d) => ({ ...d, message: e.target.value }))}
+                className={textareaClass}
+              />
             </div>
-            <TemplateButton tone="dark" type="submit" disabled={pending}>
-              {pending ? "등록 중…" : "등록하기"}
-            </TemplateButton>
-          </form>
+          </SheetForm>
         </DrawerContent>
       </Drawer>
 
@@ -186,12 +228,16 @@ export function Guestbook({ title, previewCount }: { title: string; previewCount
             <DrawerTitle className="font-myeongjo text-[17px] font-normal text-ink">방명록 삭제</DrawerTitle>
             <DrawerDescription className="text-ink-muted">작성할 때 입력한 비밀번호를 입력해 주세요.</DrawerDescription>
           </DrawerHeader>
-          <form onSubmit={confirmDelete} className="flex flex-col gap-4 px-4 pb-8">
-            <Input name="password" type="password" required aria-label="비밀번호" autoComplete="current-password" className={fieldClass} />
-            <TemplateButton tone="dark" type="submit" disabled={pending}>
-              {pending ? "삭제 중…" : "삭제하기"}
-            </TemplateButton>
-          </form>
+          <SheetForm
+            onSubmit={confirmDelete}
+            submit={
+              <TemplateButton tone="dark" type="submit" disabled={pending}>
+                {pending ? "삭제 중…" : "삭제하기"}
+              </TemplateButton>
+            }
+          >
+            <Input name="password" {...passwordProps} required aria-label="비밀번호" enterKeyHint="done" className={fieldClass} />
+          </SheetForm>
         </DrawerContent>
       </Drawer>
     </Reveal>

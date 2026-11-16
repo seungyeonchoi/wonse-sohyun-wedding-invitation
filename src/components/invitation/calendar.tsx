@@ -6,6 +6,7 @@ import { brideName, groomName } from "@/lib/invitation";
 import { cn } from "@/lib/utils";
 import { describeWeddingDate, monthMatrix } from "@/lib/wedding-date";
 
+import { AddToCalendar, WeddingDayMark } from "./calendar-extras";
 import { DDay } from "./dday";
 import { Reveal } from "./reveal";
 
@@ -17,7 +18,7 @@ export function Calendar() {
   const weeks = monthMatrix(date.year, date.month);
 
   return (
-    <Reveal aria-label="예식 날짜" className="bg-paper">
+    <Reveal id="calendar" aria-label="예식 날짜" className="bg-paper">
       <div className="artboard flex flex-col items-center" style={{ paddingTop: u(31.8), paddingBottom: u(33) }}>
         <div className="relative overflow-hidden" style={{ width: u(359), height: u(150) }}>
           <Image src={invitation.calendar.photo} alt="" fill sizes="(max-width: 430px) 90vw, 390px" className="object-cover" />
@@ -54,16 +55,20 @@ export function Calendar() {
                     <td key={i} className="relative p-0 align-top" style={{ height: u(66) }}>
                       {day ? (
                         <>
-                          <span
-                            className={cn(
-                              "absolute grid place-items-center rounded-full font-medium",
-                              isWedding ? "bg-ink-accent text-paper" : i === 0 ? "text-ink-accent" : "text-ink",
-                            )}
-                            style={{ left: u(2), top: u(4), width: u(24), height: u(24), fontSize: u(14) }}
-                            aria-current={isWedding ? "date" : undefined}
-                          >
-                            {day}
-                          </span>
+                          {isWedding ? (
+                            <WeddingDayMark
+                              day={day}
+                              className="absolute grid place-items-center rounded-full bg-ink-accent font-medium text-paper transition-transform active:scale-90"
+                              style={{ left: u(2), top: u(4), width: u(24), height: u(24), fontSize: u(14) }}
+                            />
+                          ) : (
+                            <span
+                              className={cn("absolute grid place-items-center rounded-full font-medium", i === 0 ? "text-ink-accent" : "text-ink")}
+                              style={{ left: u(2), top: u(4), width: u(24), height: u(24), fontSize: u(14) }}
+                            >
+                              {day}
+                            </span>
+                          )}
                           {isWedding ? (
                             <span
                               className="absolute text-left text-ink-accent"
@@ -83,8 +88,9 @@ export function Calendar() {
         </table>
 
         <div style={{ marginTop: u(33) }}>
-          <DDay date={invitation.date} groom={groomName} bride={brideName} />
+          <DDay groom={groomName} bride={brideName} />
         </div>
+        <AddToCalendar />
       </div>
     </Reveal>
   );

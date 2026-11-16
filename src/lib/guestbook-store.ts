@@ -1,15 +1,8 @@
 import "server-only";
 
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { rpc } from "./supabase";
 
-/**
- * Guestbook storage.
- *
- * ⚠️ This keeps entries in server memory: they survive hot reloads but not restarts,
- * and serverless instances don't share them. Replace the three functions below with
- * a real database (Supabase, Vercel Postgres, Upstash Redis …) before going live —
- * the API routes and UI only depend on these signatures.
- */
+/** Guestbook, stored in Supabase (wedding.guestbook). Passwords are bcrypt-hashed and checked in the database. */
 
 export type GuestbookEntry = {
   id: string;
@@ -18,42 +11,22 @@ export type GuestbookEntry = {
   createdAt: string;
 };
 
-type StoredEntry = GuestbookEntry & { salt: string; hash: string };
+type Row = { id: string; name: string; message: string; created_at: string };
 
-const store = globalThis as unknown as { __guestbook?: StoredEntry[] };
-const entries = (store.__guestbook ??= []);
+const toEntry = ({ id, name, message, created_at }: Row): GuestbookEntry => ({ id, name, message, createdAt: created_at });
 
-function hashPassword(password: string, salt: string) {
-  return scryptSync(password, salt, 32).toString("hex");
-}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function listEntries(): Promise<GuestbookEntry[]> {
-  return entries
-    .map(({ id, name, message, createdAt }) => ({ id, name, message, createdAt }))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return (await rpc<Row[]>("wedding_guestbook_list")).map(toEntry);
 }
 
 export async function addEntry(input: { name: string; message: string; password: string }): Promise<GuestbookEntry> {
-  const salt = randomBytes(16).toString("hex");
-  const entry: StoredEntry = {
-    id: randomUUID(),
-    name: input.name,
-    message: input.message,
-    createdAt: new Date().toISOString(),
-    salt,
-    hash: hashPassword(input.password, salt),
-  };
-  entries.push(entry);
-  const { id, name, message, createdAt } = entry;
-  return { id, name, message, createdAt };
+  const [row] = await rpc<Row[]>("wedding_guestbook_add", { p_name: input.name, p_message: input.message, p_password: input.password });
+  return toEntry(row);
 }
 
 export async function deleteEntry(id: string, password: string): Promise<"ok" | "not_found" | "forbidden"> {
-  const index = entries.findIndex((e) => e.id === id);
-  if (index === -1) return "not_found";
-  const entry = entries[index];
-  const attempt = Buffer.from(hashPassword(password, entry.salt), "hex");
-  if (!timingSafeEqual(attempt, Buffer.from(entry.hash, "hex"))) return "forbidden";
-  entries.splice(index, 1);
-  return "ok";
+  if (!UUID.test(id)) return "not_found";
+  return rpc<"ok" | "not_found" | "forbidden">("wedding_guestbook_delete", { p_id: id, p_password: password });
 }

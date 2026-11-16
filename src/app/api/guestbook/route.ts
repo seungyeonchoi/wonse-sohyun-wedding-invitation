@@ -1,10 +1,11 @@
 import { connection } from "next/server";
 
+import { safely } from "@/lib/api";
 import { addEntry, listEntries } from "@/lib/guestbook-store";
 
 export async function GET() {
   await connection();
-  return Response.json({ entries: await listEntries() });
+  return safely(async () => Response.json({ entries: await listEntries() }));
 }
 
 const LIMITS = { name: 20, message: 500, passwordMin: 4, passwordMax: 20 };
@@ -25,6 +26,5 @@ export async function POST(request: Request) {
     return Response.json({ error: `비밀번호는 ${LIMITS.passwordMin}~${LIMITS.passwordMax}자로 입력해 주세요.` }, { status: 400 });
   }
 
-  const entry = await addEntry({ name, message, password });
-  return Response.json({ entry }, { status: 201 });
+  return safely(async () => Response.json({ entry: await addEntry({ name, message, password }) }, { status: 201 }));
 }

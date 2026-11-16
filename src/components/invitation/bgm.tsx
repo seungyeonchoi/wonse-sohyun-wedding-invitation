@@ -29,13 +29,15 @@ type Props = {
   /** Shown on the phone's lock screen / control center while playing (Media Session). */
   title: string;
   artist: string;
+  /** Third line of the lock-screen card; used to put the couple and the date on the guest's own lock screen. */
+  album?: string;
   artwork?: string;
   /** Start playing on load, or on the first tap if the browser blocks unmuted autoplay. */
   autoplay?: boolean;
   children: ReactNode;
 };
 
-export function BgmProvider({ src, title, artist, artwork, autoplay = false, children }: Props) {
+export function BgmProvider({ src, title, artist, album, artwork, autoplay = false, children }: Props) {
   const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -134,6 +136,7 @@ export function BgmProvider({ src, title, artist, artwork, autoplay = false, chi
     ms.metadata = new MediaMetadata({
       title,
       artist,
+      album,
       artwork: artwork ? [{ src: artwork, sizes: "1000x1000", type: "image/jpeg" }] : [],
     });
     const handlers: [MediaSessionAction, MediaSessionActionHandler][] = [
@@ -163,7 +166,7 @@ export function BgmProvider({ src, title, artist, artwork, autoplay = false, chi
         } catch {}
       }
     };
-  }, [src, title, artist, artwork, play, seekBy, seekTo]);
+  }, [src, title, artist, album, artwork, play, seekBy, seekTo]);
 
   return (
     <BgmContext value={{ available: Boolean(src), playing, loading, currentTime, duration, toggle, seekBy, seekTo }}>

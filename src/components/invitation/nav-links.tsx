@@ -42,7 +42,7 @@ function Item({ href, onClick, icon, children }: { href: string; onClick?: (e: R
       onClick={onClick}
       target={href.startsWith("http") ? "_blank" : undefined}
       rel="noreferrer"
-      className="flex flex-1 items-center justify-center gap-1.5 rounded-[12px] border-line-strong text-[14px] leading-[21px] not-last:border-r"
+      className="flex flex-1 items-center justify-center gap-1.5 border-line-strong text-[14px] leading-[21px] whitespace-nowrap not-last:border-r max-[359px]:gap-1 max-[359px]:text-[12.5px]"
     >
       {icon}
       <span>{children}</span>

@@ -164,3 +164,211 @@
     transition: none;
   }
 }
+
+/* ───────────── easter eggs & small delights ───────────── */
+@layer components {
+  /* Section label ovals are drawn like a pen circling the word (253 ≈ the ellipse's perimeter). */
+  .reveal .label-oval {
+    stroke-dasharray: 253;
+    stroke-dashoffset: 253;
+  }
+  .reveal[data-visible="true"] .label-oval {
+    animation: draw-oval 1.3s 0.3s cubic-bezier(0.45, 0.05, 0.35, 1) forwards;
+  }
+
+  /* Polaroids develop like instant film the first time they scroll into view. */
+  .reveal .polaroid-film {
+    filter: brightness(1.9) saturate(0) contrast(0.55) sepia(0.25);
+  }
+  .reveal[data-visible="true"] .polaroid-film {
+    animation: develop 4.5s 0.4s ease-out forwards;
+  }
+
+  /* The hand letter is written out line by line (delays/durations come from --d/--t). */
+  [data-inview] .letter-line {
+    clip-path: inset(0 100% 0 0);
+  }
+  [data-inview="true"] .letter-line {
+    animation: write-line var(--t, 1s) var(--d, 0s) linear forwards;
+  }
+
+  .booth-shot {
+    animation: booth-shot 0.55s ease-out both;
+  }
+  .burst-heart {
+    animation: burst-fly 1s ease-out both;
+  }
+  .like-pop {
+    animation: like-pop 0.9s ease-out both;
+  }
+  .hero-notification {
+    animation: notify var(--hold, 4s) ease-in-out both;
+  }
+
+  .venue-pin {
+    position: relative;
+    width: 52px;
+    height: 60px;
+    filter: drop-shadow(0 3px 6px rgb(0 0 0 / 0.3));
+  }
+  .venue-pin img {
+    position: absolute;
+    inset: 0 0 auto 0;
+    width: 52px;
+    height: 52px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    background: #fff;
+    object-fit: cover;
+  }
+  .venue-pin::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: 1px;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 0 0 3px 0;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .venue-pin span {
+    position: absolute;
+    top: -3px;
+    right: -5px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--ink-accent);
+    color: #fff;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal .label-oval,
+    .reveal[data-visible="true"] .label-oval {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+    .reveal .polaroid-film,
+    .reveal[data-visible="true"] .polaroid-film {
+      animation: none;
+      filter: none;
+    }
+    [data-inview] .letter-line,
+    [data-inview="true"] .letter-line {
+      animation: none;
+      clip-path: none;
+    }
+    .booth-shot,
+    .burst-heart,
+    .like-pop {
+      display: none;
+    }
+    .hero-notification {
+      animation-name: notify-fade;
+    }
+  }
+}
+
+@keyframes draw-oval {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes develop {
+  0% {
+    filter: brightness(1.9) saturate(0) contrast(0.55) sepia(0.25);
+  }
+  55% {
+    filter: brightness(1.2) saturate(0.6) contrast(0.85) sepia(0.15);
+  }
+  100% {
+    filter: brightness(1) saturate(1) contrast(1) sepia(0);
+  }
+}
+@keyframes write-line {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* photo-booth slot: dark while "waiting", a white flash, then the photo */
+@keyframes booth-shot {
+  0% {
+    opacity: 1;
+    background-color: #000;
+  }
+  12% {
+    opacity: 1;
+    background-color: #fff;
+  }
+  100% {
+    opacity: 0;
+    background-color: #fff;
+  }
+}
+@keyframes burst-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--s)) rotate(var(--r));
+  }
+}
+@keyframes like-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  15% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  45% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -85%) scale(1);
+  }
+}
+/* lock-screen banner: drops in, stays, slides back up */
+@keyframes notify {
+  0% {
+    opacity: 0;
+    transform: translateY(-140%);
+  }
+  9%,
+  88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-140%);
+  }
+}
+@keyframes notify-fade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  9%,
+  88% {
+    opacity: 1;
+  }
+}

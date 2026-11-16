@@ -15,7 +15,7 @@ function AccountRow({ account }: { account: Account }) {
           {account.role} <span>{account.holder}</span>
         </div>
         <div>
-          {account.bank} <span className="tracking-normal">{account.number}</span>
+          {account.bank} <span className="tracking-normal whitespace-nowrap">{account.number}</span>
         </div>
       </div>
       <div className="mt-[3px] flex shrink-0 flex-col items-end gap-1.5">

@@ -1,12 +1,13 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Heart, X } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { GalleryPhoto } from "@/config/invitation";
+import { photoId } from "@/lib/gallery";
 import { cn } from "@/lib/utils";
 
 import { Reveal } from "./reveal";
@@ -24,6 +25,30 @@ const DISMISS_SPEED = 0.6;
 /** Movement (px) before deciding whether a drag is vertical (close) or horizontal (next photo). */
 const AXIS_LOCK = 8;
 
+/** Two taps within this many ms and px count as a double tap (= like). */
+const DOUBLE_TAP_MS = 320;
+const DOUBLE_TAP_PX = 40;
+/** Most-liked photos that get a "하객 Pick" badge in the grid. */
+const PICK_COUNT = 3;
+/** Photos this browser has liked, so a guest can't like the same photo twice. */
+const LIKED_KEY = "wedding:liked";
+
+function readLiked(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(LIKED_KEY) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveLiked(liked: Set<string>) {
+  try {
+    localStorage.setItem(LIKED_KEY, JSON.stringify([...liked]));
+  } catch {
+    /* private mode / storage blocked: likes still count, just not remembered */
+  }
+}
+
 type Drag = { id: number; x: number; y: number; axis: "x" | "y" | null; lastY: number; lastT: number; prevY: number; prevT: number };
 
 export function Gallery({ title, photos, initialCount }: { title: string; photos: GalleryPhoto[]; initialCount: number }) {
@@ -36,6 +61,50 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
   const [pullY, setPullY] = useState(0);
   const [pulling, setPulling] = useState(false);
   const drag = useRef<Drag | null>(null);
+  const lastTap = useRef({ t: -Infinity, x: 0, y: 0 });
+  /** like count per photo id (from the server) and the ids this browser has liked */
+  const [likes, setLikes] = useState<Record<string, number>>({});
+  const [liked, setLiked] = useState<Set<string>>(() => new Set());
+  /** the big heart that pops where the guest double-tapped */
+  const [pop, setPop] = useState<{ key: number; x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/likes")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { likes: Record<string, number> }) => setLikes(data.likes))
+      .catch(() => {})
+      .finally(() => setLiked(readLiked()));
+  }, []);
+
+  const toggleLike = (id: string, { onlyLike = false } = {}) => {
+    const wasLiked = liked.has(id);
+    if (wasLiked && onlyLike) return;
+    const delta = wasLiked ? -1 : 1;
+    const next = new Set(liked);
+    if (wasLiked) next.delete(id);
+    else next.add(id);
+    setLiked(next);
+    saveLiked(next);
+    setLikes((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + delta) }));
+    fetch("/api/likes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photo: id, delta }),
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { photo: string; count: number }) => setLikes((prev) => ({ ...prev, [data.photo]: data.count })))
+      .catch(() => {});
+  };
+
+  const shownIndex = api ? current : startAt;
+  const shownId = photos[shownIndex] ? photoId(photos[shownIndex].src) : "";
+  const picks = new Set(
+    Object.entries(likes)
+      .filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, PICK_COUNT)
+      .map(([id]) => id),
+  );
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0 || (e.target instanceof Element && e.target.closest("button"))) return;
@@ -69,6 +138,18 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
+    if (d.axis === null) {
+      // a tap: two in quick succession like the photo (Instagram style)
+      const prev = lastTap.current;
+      if (e.timeStamp - prev.t < DOUBLE_TAP_MS && Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < DOUBLE_TAP_PX) {
+        lastTap.current = { t: -Infinity, x: 0, y: 0 };
+        setPop({ key: e.timeStamp, x: e.clientX, y: e.clientY });
+        toggleLike(shownId, { onlyLike: true });
+      } else {
+        lastTap.current = { t: e.timeStamp, x: e.clientX, y: e.clientY };
+      }
+      return;
+    }
     if (d.axis !== "y") return;
     setPulling(false);
     const pulled = Math.max(d.lastY - d.y, 0);
@@ -94,6 +175,11 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
       >
         {visible.map(({ src, position }, i) => (
           <li key={src} className="relative overflow-hidden bg-[#f5f7f7]" style={{ gridRowEnd: `span ${SPANS[i % SPANS.length]}` }}>
+            {picks.has(photoId(src)) ? (
+              <span className="pointer-events-none absolute top-1.5 left-1.5 z-10 rounded-full bg-black/45 px-2 py-0.5 font-gothic text-[10px] tracking-normal text-white">
+                ♥ 하객 Pick
+              </span>
+            ) : null}
             <button
               type="button"
               className="absolute inset-0"
@@ -168,8 +254,30 @@ export function Gallery({ title, photos, initialCount }: { title: string; photos
               pullY > 0 && "opacity-0",
             )}
           >
-            {(api ? current : startAt) + 1} / {photos.length}
+            {shownIndex + 1} / {photos.length}
           </p>
+          {pop ? (
+            <Heart
+              key={pop.key}
+              aria-hidden
+              className="like-pop pointer-events-none absolute size-24 fill-white text-white drop-shadow-[0_4px_20px_rgb(0_0_0/0.35)]"
+              style={{ left: pop.x, top: pop.y }}
+              onAnimationEnd={() => setPop(null)}
+            />
+          ) : null}
+          <button
+            type="button"
+            onClick={() => toggleLike(shownId)}
+            aria-pressed={liked.has(shownId)}
+            aria-label={liked.has(shownId) ? "좋아요 취소" : "좋아요"}
+            className={cn(
+              "absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/40 px-3.5 py-1.5 font-inter text-sm tracking-normal text-white transition-opacity",
+              pullY > 0 && "opacity-0",
+            )}
+          >
+            <Heart className={cn("size-4 transition-transform active:scale-125", liked.has(shownId) && "fill-[#ff4d6d] text-[#ff4d6d]")} />
+            {likes[shownId] ? <span>{likes[shownId]}</span> : null}
+          </button>
           <DialogClose
             className={cn("absolute top-3 right-3 grid size-10 place-items-center text-white transition-opacity", pullY > 0 && "opacity-0")}
             aria-label="닫기"
