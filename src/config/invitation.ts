@@ -12,6 +12,13 @@ const HALL = "5층 아트홀";
 const ADDRESS = "서울 강남구 언주로 508";
 
 /**
+ * 링크 미리보기와 카카오톡 공유 카드에 같이 쓰는 800×800 정사각 사진 (갤러리 06번에서 잘라냄).
+ * 카카오가 이미지를 캐시하니 바꿀 땐 파일 이름도 바꿔주세요.
+ */
+const SHARE_IMAGE = "/photos/share.jpg";
+const SHARE_IMAGE_SIZE = 800;
+
+/**
  * 갤러리에 보여줄 순서 (public/photos/gallery/NN.jpg의 NN). 촬영 순서대로입니다.
  * 원본에 촬영 시각(EXIF)이 남아 있지 않아 작가 원본 번호를 기준으로 했습니다:
  * 세부-1~20 (스튜디오 → 베이지 수트 → 야외 → 잔디밭) → 색감-1~4 (잔디밭, 18시쯤) → 세부-21~26 (노을 다리).
@@ -79,7 +86,8 @@ export type TransportItem = {
 export const invitation = {
   meta: {
     title: "원세 ♥ 소현 결혼합니다",
-    description: `${describeWeddingDate(WEDDING_DATE).fullKo}, ${VENUE} ${HALL}`,
+    /** 카카오톡 미리보기는 설명을 두 줄까지만 보여줘서 짧게 씁니다. */
+    description: `${describeWeddingDate(WEDDING_DATE).shortKo} · 상록아트홀 5층`,
     /** 배포 도메인 (카카오 공유/OG 이미지 절대경로에 사용) */
     // 직접 지정 > Vercel 프로덕션 도메인(자동 주입) > 로컬
     siteUrl:
@@ -87,9 +95,9 @@ export const invitation = {
       (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL
         ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`
         : "http://localhost:3000"),
-    /** 링크 미리보기 이미지. 카카오 허용 비율(1:1·2:1·4:3)에 맞춘 2:1. 바꿀 땐 파일 이름도 바꿔야 캐시에 안 걸려요. */
-    ogImage: "/photos/og-couple.jpg",
-    ogImageSize: { width: 1200, height: 600 },
+    /** 링크 미리보기 이미지. 공유 카드와 같은 1:1 사진 (카카오 허용 비율 1:1·2:1·4:3). */
+    ogImage: SHARE_IMAGE,
+    ogImageSize: { width: SHARE_IMAGE_SIZE, height: SHARE_IMAGE_SIZE },
   },
 
   /**
@@ -97,9 +105,8 @@ export const invitation = {
    * 링크를 그냥 붙여넣을 때 나오는 미리보기는 위 meta(og)를 씁니다.
    */
   share: {
-    /** 800×800 정사각 사진 (갤러리 06번에서 잘라냄). 카카오가 이미지를 캐시하니 바꿀 땐 파일 이름도 바꿔주세요. */
-    image: "/photos/share.jpg",
-    imageSize: 800,
+    image: SHARE_IMAGE,
+    imageSize: SHARE_IMAGE_SIZE,
     /** 왼쪽 버튼. 오른쪽엔 카카오가 "위치 보기" 버튼을 자동으로 붙입니다. */
     buttonTitle: "청첩장 보기",
   },
