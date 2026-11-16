@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef, type PointerEvent } from "react";
+import { useEffect, useRef, type PointerEvent } from "react";
 import { toast } from "sonner";
 
 import { invitation } from "@/config/invitation";
 import { box, u } from "@/lib/artboard";
+import { loadKakaoSdk } from "@/lib/kakao";
+import { shareInvitation } from "@/lib/share";
 import { pageEffect, useSignal } from "@/lib/signal";
 import { useWeddingPhase } from "@/lib/use-now";
 import { cn } from "@/lib/utils";
-import { describeWeddingDate } from "@/lib/wedding-date";
 
 import { useBgm } from "./bgm";
 import { Particles } from "./particles";
@@ -50,11 +51,6 @@ export function HeroPlayerTitle() {
   return <>{phase?.kind === "married" ? invitation.hero.playerTitleAfter : invitation.hero.playerTitle}</>;
 }
 
-function airplayToast() {
-  const d = describeWeddingDate(invitation.date);
-  toast(`🔊 ${d.monthDayKo} ${d.weekdayTimeKo}, ${invitation.location.venue} 스피커에 연결될 예정이에요.`);
-}
-
 function formatTime(sec: number) {
   if (!Number.isFinite(sec)) return "0:00";
   const s = Math.floor(sec);
@@ -70,6 +66,13 @@ export function HeroPlayerControls() {
   const bar = useRef<HTMLDivElement>(null);
   const effect = useSignal(pageEffect);
   const taps = useRef({ count: 0, last: 0 });
+
+  // The share icon is on the cover, so load the Kakao SDK once the page has settled:
+  // a tap can then open KakaoTalk straight away (in-app browsers may block a share that waits on the network).
+  useEffect(() => {
+    const t = setTimeout(() => loadKakaoSdk().catch(() => {}), 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   const onWaveTap = () => {
     const now = Date.now();
@@ -206,19 +209,20 @@ export function HeroPlayerControls() {
         <DoubleTriangle flip />
       </button>
 
-      {/* AirPlay (audio) glyph: concentric arcs over a triangle */}
+      {/* KakaoTalk share: a speech-bubble glyph where the lock screen's AirPlay icon would be */}
       <button
         type="button"
         data-bgm-control
-        aria-label="스피커 연결"
-        onClick={airplayToast}
+        aria-label="카카오톡으로 공유하기"
+        onClick={shareInvitation}
         style={{ ...box(334, 626, 24, 24), color: SOFT }}
         className="transition-transform active:scale-90"
       >
-        <svg aria-hidden viewBox="0 0 24 24" fill="none" className="size-full">
-          <path d="M5.2 17.4a9.2 9.2 0 1 1 13.6 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M8.3 14.6a5 5 0 1 1 7.4 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M11.2 14.3a1 1 0 0 1 1.6 0l4 5.4a1 1 0 0 1-.8 1.6H8a1 1 0 0 1-.8-1.6Z" fill="currentColor" />
+        <svg aria-hidden viewBox="0 0 24 24" className="size-full">
+          <path
+            d="M12 3.5c-5.2 0-9.4 3.3-9.4 7.3 0 2.6 1.7 4.9 4.3 6.2l-.9 3.4c-.1.4.3.7.7.5l4.1-2.7c.4 0 .8.1 1.2.1 5.2 0 9.4-3.3 9.4-7.4S17.2 3.5 12 3.5Z"
+            fill="currentColor"
+          />
         </svg>
       </button>
     </>
