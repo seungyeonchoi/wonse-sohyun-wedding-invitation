@@ -41,6 +41,7 @@ export function GET() {
     "BEGIN:VEVENT",
     "UID:wedding-20270227T060000Z@wonse-sohyun",
     `DTSTAMP:${DTSTAMP}`,
+    "SEQUENCE:1",
     `DTSTART:${icsTime(e.start)}`,
     `DTEND:${icsTime(e.end)}`,
     `SUMMARY:${escape(e.title)}`,
