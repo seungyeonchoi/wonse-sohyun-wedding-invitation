@@ -27,7 +27,7 @@ function fold(line: string) {
  * Fixed rather than `new Date()` so the route stays prerendered under cacheComponents.
  * Increment SEQUENCE (and bump DTSTAMP) whenever the event details change.
  */
-const DTSTAMP = "20261116T111543Z"; // d8bda27, 2026-11-16 20:15:43 +09:00
+const DTSTAMP = icsTime(new Date("2026-11-16T20:15:43+09:00")); // d8bda27
 
 /** "Add to calendar" file for the ceremony (with a reminder the day before). Static, built once. */
 export function GET() {
