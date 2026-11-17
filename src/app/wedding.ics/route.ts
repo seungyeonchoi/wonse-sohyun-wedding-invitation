@@ -25,7 +25,7 @@ function fold(line: string) {
 /**
  * DTSTAMP: when this iCalendar object was created (RFC 5545 §3.8.7.2), not the event time.
  * Fixed rather than `new Date()` so the route stays prerendered under cacheComponents.
- * Bump it whenever the event details change.
+ * Increment SEQUENCE (and bump DTSTAMP) whenever the event details change.
  */
 const DTSTAMP = "20261116T111543Z"; // d8bda27, 2026-11-16 20:15:43 +09:00
 
