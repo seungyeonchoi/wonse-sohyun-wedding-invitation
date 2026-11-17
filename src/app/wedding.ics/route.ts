@@ -39,7 +39,7 @@ export function GET() {
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:wedding-${icsTime(e.start)}@wonse-sohyun`,
+    "UID:wedding-20270227T060000Z@wonse-sohyun",
     `DTSTAMP:${DTSTAMP}`,
     `DTSTART:${icsTime(e.start)}`,
     `DTEND:${icsTime(e.end)}`,
